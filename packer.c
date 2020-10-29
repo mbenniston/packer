@@ -126,7 +126,7 @@ int main(int argc, char** argv)
 size_t pack(FILE* in_file, FILE* out_file)
 {
 	//preamble
-	fprintf(out_file, "");
+	fprintf(out_file, "#include <stddef.h>\n\n");
 	fprintf(out_file, "%s %s[] = { ", var_type, var_name);
 
 	//read from input file and print to output file, byte by byte.
