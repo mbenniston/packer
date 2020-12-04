@@ -1,8 +1,8 @@
 #include <stdio.h>
-#include <argp.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include "argparse/argparse.h"
 
 /*
 	Packer
@@ -32,6 +32,11 @@
 			-c (to enable use of extern "C" in the header file)
 */
 
+static const char* const usage[] = {
+	"\n\tpacker [-i input_filename] [-o output_filename] [-d header_filename] [-v variable_name] [-t variable_type] [-p] [-c]",
+	NULL
+};
+
 const char* const VAR_LENGTH_POSTFIX = "_length";
 
 const char* var_name = "var_name";
@@ -46,29 +51,25 @@ int header_externc = 0;
 size_t pack(FILE* in_file, FILE* out_file);
 void header_definition(FILE* out_file, size_t bytesRead);
 
-//argp callback function
-static int parse_opt(int key, char* arg, struct argp_state* state);
-
 int main(int argc, char** argv)
 {
-	struct argp_option options[] = {
-		{0, 'i', "input filename", 0, "Specifies the input filename, default is stdin"},
-		{0, 'o', "output filename", 0, "Specifies the output filename, default is stdout"},
-		{0, 'v', "variable name", 0, "The name of the variable in the source file"},
-		{0, 't', "variable type", 0, "The type of the variable in the source file"},
-		{0, 'd', "output header filename", 0, "Specifies the output filename for the header, does not create by default"},
-		{0, 'p', 0, 0, "Add for use of #pragma once in header file"},
-		{0, 'c', 0, 0, "Add for use of extern \"C\" in header file"},
-		{ 0 }
+	struct argparse_option options[] = {
+		OPT_HELP(),
+		OPT_GROUP("Options"),
+		OPT_STRING('i', "input filename", &input_filename, "Specifies the input filename, default is stdin"),
+		OPT_STRING('o', "output filename", &output_filename, "Specifies the output filename, default is stdout"),
+		OPT_STRING('v', "variable name", &var_name, "The name of the variable in the source file"),
+		OPT_STRING('t', "variable type", &var_type, "The type of the variable in the source file"),
+		OPT_STRING('d', "output header filename", &output_header_filename, "Specifies the output filename for the header, does not create by default"),
+		OPT_BOOLEAN('p', NULL, &header_use_pragma, "Add for use of #pragma once in header file"),
+		OPT_BOOLEAN('c', NULL, &header_externc, "Add for use of extern \"C\" in header file"),
+		OPT_END(),
 	};
 
-	struct argp argp = {options, parse_opt};
-	
-	int ret = argp_parse(&argp, argc, argv, 0, 0, 0);
-	//exit the program if argp did not succeed  
-	if(ret != 0) {
-		return ret;
-	}
+	struct argparse argparse;
+	argparse_init(&argparse, options, usage, 0);
+	argparse_describe(&argparse, "\nProgram to convert a stream of bytes into an acceptable C/C++ format", "");
+	argc = argparse_parse(&argparse, argc, argv);
 
 	FILE* in_file = stdin;
 	FILE* out_file = stdout;

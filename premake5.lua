@@ -21,6 +21,7 @@ workspace "packer"
 project "packer"
 	kind "ConsoleApp"
 
+    files "argparse/argparse.c"
     files "packer.c"
 
     filter {}
